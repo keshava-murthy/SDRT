@@ -6,7 +6,7 @@
 #include "data_manager.h"
 
 // ============================================================================
-// Menu: drives the entire user interface
+//   Menu: drives the entire user interface
 //   Delegates to RoutineManager, ReminderService, Statistics, DataManager
 // ============================================================================
 class Menu

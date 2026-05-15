@@ -4,8 +4,8 @@
 #include <string>
 
 // ============================================================================
-// DataManager: saves/loads routines to/from a JSON file
-//   Uses nlohmann/json (json.hpp) for serialization
+//   DataManager: saves/loads routines to/from a JSON file
+//   Uses nlohmann/json (json.h) for serialization
 //   Uses C++17 std::filesystem to create directories automatically
 // ============================================================================
 class DataManager

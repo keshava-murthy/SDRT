@@ -31,6 +31,10 @@ void ReminderService::start()
     if(running_.load()) return;  // already running
 
     running_.store(true);
+    std::cout << Color::DIM
+              << "  (Demo mode: checking every 10 seconds. "
+              << "In production, intervals would match your configured hours.)"
+              << Color::RESET << "\n";
 
     // C++11: Lambda captured 'this' to call member function in new thread
     reminder_thread_ = std::thread([this]() { reminderLoop(); });
@@ -125,8 +129,10 @@ void ReminderService::reminderLoop()
         // C++11: condition_variable::wait_for
         //   Sleeps for 30 seconds BUT wakes up immediately if stop() is called
         //   The lambda predicate prevents spurious wakeups
+        // Demo: checks every 10 seconds (in production, this would use
+        // the routine's notification_freq_hours converted to real hours)
         std::unique_lock<std::mutex> lock(mtx_);
-        cv_.wait_for(lock, std::chrono::seconds(30), [this]()
+        cv_.wait_for(lock, std::chrono::seconds(10), [this]()
         {
             return !running_.load();  // wake up early if stopping
         });

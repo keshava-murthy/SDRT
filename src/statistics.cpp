@@ -58,3 +58,60 @@ std::map<std::string, int> Statistics::priorityReport() const
     }
     return report;
 }
+
+// ============================================================================
+// Detailed category report: category -> list of routine names
+// ============================================================================
+std::map<std::string, std::vector<std::string>> Statistics::categoryDetailedReport() const
+{
+    std::map<std::string, std::vector<std::string>> report;
+
+    for(const auto& r : manager_.getAllRoutines())
+    {
+        std::string cat = r.category.empty() ? "Uncategorized" : r.category;
+        std::string status = r.completed ? " [DONE]" : " [PENDING]";
+        report[cat].push_back(r.name + status);
+    }
+    return report;
+}
+
+// ============================================================================
+// Detailed priority report: priority -> list of routine names
+// ============================================================================
+std::map<std::string, std::vector<std::string>> Statistics::priorityDetailedReport() const
+{
+    std::map<std::string, std::vector<std::string>> report;
+
+    for(const auto& r : manager_.getAllRoutines())
+    {
+        std::string status = r.completed ? " [DONE]" : " [PENDING]";
+        report[Routine::priorityToString(r.priority)].push_back(r.name + status);
+    }
+    return report;
+}
+
+// ============================================================================
+// Get completed routine names
+// ============================================================================
+std::vector<std::string> Statistics::completedRoutineNames() const
+{
+    std::vector<std::string> names;
+    for(const auto& r : manager_.getAllRoutines())
+    {
+        if(r.completed) names.push_back(r.name);
+    }
+    return names;
+}
+
+// ============================================================================
+// Get pending routine names
+// ============================================================================
+std::vector<std::string> Statistics::pendingRoutineNames() const
+{
+    std::vector<std::string> names;
+    for(const auto& r : manager_.getAllRoutines())
+    {
+        if(!r.completed) names.push_back(r.name);
+    }
+    return names;
+}

@@ -15,6 +15,7 @@ namespace Quotes
 
 // Motivational quotes shown at startup
 static const std::vector<std::string> motivational_quotes = {
+    "\"Remember RCB waited for 18 years to win the trophy.\" - Keshavamurthy",
     "\"The secret of getting ahead is getting started.\" - Mark Twain",
     "\"It always seems impossible until it's done.\" - Nelson Mandela",
     "\"Small daily improvements are the key to staggering long-term results.\"",

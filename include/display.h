@@ -5,7 +5,7 @@
 #include <vector>
 
 // ============================================================================
-// C++11: constexpr - values computed at compile time (zero runtime cost)
+//   C++11: constexpr - values computed at compile time (zero runtime cost)
 //   ANSI escape codes let us add colors and styles in the terminal
 //   Works on Linux, Mac, and Windows 10+ terminals
 // ============================================================================

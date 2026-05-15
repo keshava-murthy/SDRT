@@ -5,7 +5,7 @@
 #include <chrono>    // C++11: time handling utilities
 
 // ============================================================================
-// C++11: enum class (scoped enumeration)
+//   C++11: enum class (scoped enumeration)
 //   - Type-safe: won't implicitly convert to int
 //   - Scoped: must use Priority::LOW, not just LOW
 // ============================================================================
@@ -40,7 +40,7 @@ struct Routine
     // Default constructor
     Routine();
 
-    // C++11: Move semantics - strings are moved (transferred) instead of copied
+    //   C++11: Move semantics - strings are moved (transferred) instead of copied
     //   This avoids expensive deep copies of string data
     Routine(int id, std::string name, std::string desc,
             std::string cat, Priority pri, int freq_hours = 24);

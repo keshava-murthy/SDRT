@@ -247,19 +247,58 @@ void Menu::statisticsReports()
                 Display::pressEnterToContinue();
                 break;
             case 2:
+            {
                 Display::printInfo("Completed: " +
                     std::to_string(stats_.completedRoutines()));
+                auto names = stats_.completedRoutineNames();
+                if(!names.empty())
+                {
+                    for(const auto& n : names)
+                        std::cout << "    " << Color::GREEN << "- " << n << Color::RESET << "\n";
+                }
                 Display::pressEnterToContinue();
                 break;
+            }
             case 3:
+            {
                 Display::printInfo("Pending: " +
                     std::to_string(stats_.pendingRoutines()));
+                auto names = stats_.pendingRoutineNames();
+                if(!names.empty())
+                {
+                    for(const auto& n : names)
+                        std::cout << "    " << Color::YELLOW << "- " << n << Color::RESET << "\n";
+                }
                 Display::pressEnterToContinue();
                 break;
+            }
             case 4:
             {
                 Display::printSubHeader("Completion Progress");
+                std::cout << "  Total activities committed: " << stats_.totalRoutines() << "\n";
+                std::cout << "  Activities completed:       " << Color::GREEN
+                          << stats_.completedRoutines() << Color::RESET << "\n";
+                std::cout << "  Activities remaining:       " << Color::YELLOW
+                          << stats_.pendingRoutines() << Color::RESET << "\n\n";
                 Display::printProgressBar(stats_.completionPercentage());
+
+                // Show completed activity names
+                auto completed = stats_.completedRoutineNames();
+                if(!completed.empty())
+                {
+                    std::cout << "\n  " << Color::GREEN << "Completed:" << Color::RESET << "\n";
+                    for(const auto& n : completed)
+                        std::cout << "    " << Color::GREEN << "- " << n << Color::RESET << "\n";
+                }
+
+                // Show remaining activity names
+                auto pending = stats_.pendingRoutineNames();
+                if(!pending.empty())
+                {
+                    std::cout << "\n  " << Color::YELLOW << "Remaining:" << Color::RESET << "\n";
+                    for(const auto& n : pending)
+                        std::cout << "    " << Color::YELLOW << "- " << n << Color::RESET << "\n";
+                }
 
                 // Appreciation when everything is done!
                 if(stats_.completionPercentage() >= 100.0
@@ -278,14 +317,18 @@ void Menu::statisticsReports()
                 Display::printSubHeader("Category-wise Report");
 
                 // C++17: Structured bindings unpack the map pair
-                auto report = stats_.categoryReport();
-                for(const auto& [category, count] : report)
+                auto report = stats_.categoryDetailedReport();
+                for(const auto& [category, names] : report)
                 {
-                    std::cout << "  " << Color::CYAN
-                              << std::setw(20) << std::left << category
-                              << Color::RESET
-                              << " : " << count << " routine(s)\n";
+                    std::cout << "\n  " << Color::CYAN << Color::BOLD
+                              << category << Color::RESET
+                              << " (" << names.size() << " routine(s)):\n";
+                    for(const auto& name : names)
+                    {
+                        std::cout << "    - " << name << "\n";
+                    }
                 }
+                std::cout << "\n";
                 Display::pressEnterToContinue();
                 break;
             }
@@ -293,15 +336,19 @@ void Menu::statisticsReports()
             {
                 Display::printSubHeader("Priority-wise Report");
 
-                auto report = stats_.priorityReport();
+                auto report = stats_.priorityDetailedReport();
                 // C++17: Structured bindings
-                for(const auto& [priority, count] : report)
+                for(const auto& [priority, names] : report)
                 {
-                    std::cout << "  " << Color::CYAN
-                              << std::setw(20) << std::left << priority
-                              << Color::RESET
-                              << " : " << count << " routine(s)\n";
+                    std::cout << "\n  " << Color::CYAN << Color::BOLD
+                              << priority << Color::RESET
+                              << " (" << names.size() << " routine(s)):\n";
+                    for(const auto& name : names)
+                    {
+                        std::cout << "    - " << name << "\n";
+                    }
                 }
+                std::cout << "\n";
                 Display::pressEnterToContinue();
                 break;
             }
@@ -388,7 +435,10 @@ void Menu::addNewRoutine()
     std::cout << "    1. Low   2. Medium   3. High   4. Critical\n";
     int pri = Display::getIntInput("Priority", 1, 4);
 
-    int freq = Display::getIntInput("Reminder frequency in hours (1-168)", 1, 168);
+    std::cout << "\n  " << Color::DIM
+              << "(Note: In this demo, frequency is in seconds for quick testing."
+              << " In production, this would be hours.)" << Color::RESET << "\n";
+    int freq = Display::getIntInput("Reminder check interval in seconds for demo (1-24)", 1, 24);
 
     // C++11: std::move transfers strings efficiently into the manager
     int id = manager_.addRoutine(

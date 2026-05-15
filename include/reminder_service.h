@@ -9,14 +9,14 @@
 #include <string>
 
 // ============================================================================
-// C++11: Type alias with 'using' (modern replacement for typedef)
+//   C++11: Type alias with 'using' (modern replacement for typedef)
 //   ReminderCallback is any callable that takes a Routine reference
 //   This means lambdas, function pointers, or functors all work here
 // ============================================================================
 using ReminderCallback = std::function<void(const Routine&)>;
 
 // ============================================================================
-// ReminderService: runs a background thread that checks pending routines
+//   ReminderService: runs a background thread that checks pending routines
 //   - Notifications pile up until the user views them
 //   - Once viewed, notifications disappear (as per design)
 //   - Supports custom callbacks registered by the user

@@ -1,6 +1,6 @@
 #include "data_manager.h"
 #include "display.h"
-#include "json.hpp"       // nlohmann/json - header-only JSON library
+#include "json.h"       // nlohmann/json - header-only JSON library
 #include <fstream>
 #include <filesystem>     // C++17: filesystem operations (create dirs, check existence)
 
@@ -8,7 +8,7 @@
 using json = nlohmann::json;
 
 // ============================================================================
-// Constructor
+//   Constructor
 //   C++11: std::move transfers the string efficiently
 // ============================================================================
 DataManager::DataManager(std::string path)
@@ -17,7 +17,7 @@ DataManager::DataManager(std::string path)
 }
 
 // ============================================================================
-// Save all routines to a JSON file
+//   Save all routines to a JSON file
 //   Uses nlohmann/json for clean serialization
 //   C++17: std::filesystem to auto-create the data/ directory
 // ============================================================================
@@ -68,7 +68,7 @@ bool DataManager::saveData(const RoutineManager& manager)
 }
 
 // ============================================================================
-// Load routines from a JSON file
+//   Load routines from a JSON file
 // ============================================================================
 bool DataManager::loadData(RoutineManager& manager)
 {

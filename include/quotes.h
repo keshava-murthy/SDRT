@@ -3,10 +3,10 @@
 #include <string>
 
 // ============================================================================
-// Quotes: motivational messages and appreciation
+//   Quotes: motivational messages and appreciation
 //   - Random quote on startup to keep things positive
-//   - Appreciation when routines are completed (user feels rewarded)
-//   - Category-specific benefits (real-world advantages of the activity)
+//   - Appreciation when routines are completed
+//   - Category-specific benefits
 // ============================================================================
 namespace Quotes
 {

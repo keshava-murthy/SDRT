@@ -156,11 +156,23 @@ std::vector<Routine> RoutineManager::searchRoutines(const std::string& keyword) 
 {
     // C++11: Lambda captures 'keyword' by reference [&keyword]
     //   The lambda "remembers" the keyword variable from the outer scope
-    return filterRoutines([&keyword](const Routine& r)
+    // Case-insensitive search: convert both keyword and fields to lowercase
+    std::string lower_keyword = keyword;
+    std::transform(lower_keyword.begin(), lower_keyword.end(),
+                   lower_keyword.begin(), ::tolower);
+
+    return filterRoutines([&lower_keyword](const Routine& r)
     {
-        return r.name.find(keyword)        != std::string::npos
-            || r.description.find(keyword) != std::string::npos
-            || r.category.find(keyword)    != std::string::npos;
+        auto toLower = [](const std::string& s)
+        {
+            std::string result = s;
+            std::transform(result.begin(), result.end(), result.begin(), ::tolower);
+            return result;
+        };
+
+        return toLower(r.name).find(lower_keyword)        != std::string::npos
+            || toLower(r.description).find(lower_keyword) != std::string::npos
+            || toLower(r.category).find(lower_keyword)    != std::string::npos;
     });
 }
 
