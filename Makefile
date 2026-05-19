@@ -1,13 +1,3 @@
-# ============================================================================
-# Smart Daily Routine Tracker (SDRT) - Build Configuration
-#
-# Build:  make
-# Run:    make run
-# Clean:  make clean
-#
-# Uses C++17 for: optional, structured bindings, filesystem, etc.
-# ============================================================================
-
 CXX       = g++
 CXXFLAGS  = -std=c++17 -Wall -Wextra -I include -I ..
 LDFLAGS   =

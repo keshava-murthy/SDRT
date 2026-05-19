@@ -2,15 +2,9 @@
 
 #include <string>
 
-// ============================================================================
-//   Quotes: motivational messages and appreciation
-//   - Random quote on startup to keep things positive
-//   - Appreciation when routines are completed
-//   - Category-specific benefits
-// ============================================================================
-namespace Quotes
+namespace Spark
 {
-    std::string getRandomQuote();
-    std::string getAppreciationMessage();
-    std::string getBenefitMessage(const std::string& category);
+    std::string pickMotivator();
+    std::string pickPraise();
+    std::string pickPerks(const std::string& category);
 }

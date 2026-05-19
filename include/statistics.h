@@ -1,37 +1,29 @@
 #pragma once
 
 #include "routine_manager.h"
-#include <map>      // C++11 STL: ordered map (keys sorted automatically)
+#include <map>
 #include <vector>
 #include <string>
 
-// ============================================================================
-//   Statistics: generates reports from the routine data
-//   Uses std::map for ordered category/priority breakdowns
-// ============================================================================
-class Statistics
+class InsightEngine
 {
 private:
-    const RoutineManager& manager_;
+    const TaskOrchestrator& orchestrator_;
 
 public:
-    explicit Statistics(const RoutineManager& mgr);
+    explicit InsightEngine(const TaskOrchestrator& orch);
 
-    size_t totalRoutines() const;
-    size_t completedRoutines() const;
-    size_t pendingRoutines() const;
-    double completionPercentage() const;
+    size_t overallTally() const;
+    size_t doneCount() const;
+    size_t leftoverCount() const;
+    double progressRatio() const;
 
-    // C++11: std::map - sorted associative container
-    //   Returns category_name -> count and priority_name -> count
-    std::map<std::string, int> categoryReport() const;
-    std::map<std::string, int> priorityReport() const;
+    std::map<std::string, int> groupByLabel() const;
+    std::map<std::string, int> groupByUrgency() const;
 
-    // Detailed reports: category/priority -> list of routine names
-    std::map<std::string, std::vector<std::string>> categoryDetailedReport() const;
-    std::map<std::string, std::vector<std::string>> priorityDetailedReport() const;
+    std::map<std::string, std::vector<std::string>> labelBreakdown() const;
+    std::map<std::string, std::vector<std::string>> urgencyBreakdown() const;
 
-    // Get routine names by completion status
-    std::vector<std::string> completedRoutineNames() const;
-    std::vector<std::string> pendingRoutineNames() const;
+    std::vector<std::string> doneNames() const;
+    std::vector<std::string> leftoverNames() const;
 };

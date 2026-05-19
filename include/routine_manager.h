@@ -1,61 +1,44 @@
 #pragma once
 
 #include "routine.h"
-#include <vector>          // C++11 STL: dynamic array (most-used container)
-#include <unordered_map>   // C++11 STL: hash map for O(1) lookup by key
-#include <functional>      // C++11: std::function - type-erased callable wrapper
-#include <optional>        // C++17: optional return values
+#include <vector>
+#include <unordered_map>
+#include <functional>
+#include <optional>
 
-// ============================================================================
-//   RoutineManager: handles all CRUD operations on routines
-//   Uses STL containers: vector for ordered storage, unordered_map for fast lookup
-// ============================================================================
-class RoutineManager
+class TaskOrchestrator
 {
 private:
-    // vector stores routines in insertion order
-    std::vector<Routine> routines_;
-
-    // hash map: ID -> vector index for O(1) lookup
-    std::unordered_map<int, size_t> id_index_;
-
+    std::vector<TaskEntry> entries_;
+    std::unordered_map<int, size_t> lookup_;
     int next_id_;
 
-    void rebuildIndex();
+    void refreshLookup();
 
 public:
-    RoutineManager();
+    TaskOrchestrator();
 
-    // --- CRUD Operations ---
-    int  addRoutine(std::string name, std::string desc,
-                    std::string category, Priority priority, int freq_hours = 24);
-    bool deleteRoutine(int id);
-    bool markCompleted(int id);
-    bool updatePriority(int id, Priority new_priority);
-    bool categorizeRoutine(int id, const std::string& category);
+    int  enrollTask(std::string name, std::string desc,
+                    std::string category, Urgency urgency, int freq_hours = 24);
+    bool discardTask(int id);
+    bool sealAsDone(int id);
+    bool shiftUrgency(int id, Urgency new_urgency);
+    bool relabelTask(int id, const std::string& category);
 
-    // --- Query Operations ---
-    std::vector<Routine> getAllRoutines() const;
+    std::vector<TaskEntry> fetchAll() const;
+    std::vector<TaskEntry> siftTasks(
+        std::function<bool(const TaskEntry&)> predicate) const;
+    std::vector<TaskEntry> fetchPending() const;
+    std::vector<TaskEntry> fetchFinished() const;
+    std::vector<TaskEntry> huntByKeyword(const std::string& keyword) const;
 
-    // C++11: std::function<bool(const Routine&)> accepts ANY callable:
-    //   lambdas, function pointers, functors - very flexible filtering
-    std::vector<Routine> filterRoutines(
-        std::function<bool(const Routine&)> predicate) const;
+    std::optional<TaskEntry> pluckById(int id) const;
 
-    std::vector<Routine> getPendingRoutines() const;
-    std::vector<Routine> getCompletedRoutines() const;
-    std::vector<Routine> searchRoutines(const std::string& keyword) const;
+    size_t headcount() const;
+    size_t finishedCount() const;
+    size_t awaitingCount() const;
 
-    // C++17: std::optional - returns empty if routine not found (no exceptions)
-    std::optional<Routine> getRoutineById(int id) const;
-
-    // --- Counts ---
-    size_t totalCount() const;
-    size_t completedCount() const;
-    size_t pendingCount() const;
-
-    // --- For data persistence ---
-    const std::vector<Routine>& getRoutinesRef() const;
-    void setRoutines(std::vector<Routine> new_routines);
-    void clearAll();
+    const std::vector<TaskEntry>& peekAll() const;
+    void ingestTasks(std::vector<TaskEntry> fresh);
+    void wipeSlate();
 };

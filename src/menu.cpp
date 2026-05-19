@@ -2,508 +2,464 @@
 #include "display.h"
 #include "quotes.h"
 #include <iostream>
-#include <iomanip>   // for std::setw, std::left
+#include <iomanip>
 #include <string>
 
-// ============================================================================
-// Constructor: store references to all core components
-// ============================================================================
-Menu::Menu(RoutineManager& mgr, Statistics& st, DataManager& dm)
-    : manager_(mgr)
-    , stats_(st)
-    , data_mgr_(dm)
+Navigator::Navigator(TaskOrchestrator& orch, InsightEngine& ins, VaultKeeper& vk)
+    : orchestrator_(orch)
+    , insights_(ins)
+    , vault_(vk)
 {
 }
 
-// ============================================================================
-// Entry point: show welcome screen, load data, then enter main menu loop
-// ============================================================================
-void Menu::run()
+void Navigator::run()
 {
-    Display::clearScreen();
-    Display::printHeader("SMART DAILY ROUTINE TRACKER");
-    Display::printInfo("Welcome! Let's make today productive.");
+    Canvas::wipeScreen();
+    Canvas::showBanner("SMART DAILY ROUTINE TRACKER");
+    Canvas::showNote("Welcome! Let's make today productive.");
 
-    // Show a random motivational quote on startup
-    std::cout << "\n  " << Color::MAGENTA
-              << Quotes::getRandomQuote()
-              << Color::RESET << "\n";
+    std::cout << "\n  " << Palette::MAGENTA
+              << Spark::pickMotivator()
+              << Palette::RESET << "\n";
 
-    // Try to load previously saved data
-    if(data_mgr_.loadData(manager_))
+    if(vault_.restore(orchestrator_))
     {
-        Display::printSuccess("Loaded saved routines.");
+        Canvas::showOk("Loaded saved routines.");
 
-        size_t pending = manager_.pendingCount();
+        size_t pending = orchestrator_.awaitingCount();
         if(pending > 0)
-        {
-            Display::printWarning(std::to_string(pending) + " routine(s) still pending!");
-        }
+            Canvas::showAlert(std::to_string(pending) + " routine(s) still pending!");
     }
 
-    Display::pressEnterToContinue();
-    mainMenu();
+    Canvas::holdForEnter();
+    primaryHub();
 }
 
-// ============================================================================
-// Main menu loop
-// ============================================================================
-void Menu::mainMenu()
+void Navigator::primaryHub()
 {
     while(true)
     {
-        Display::clearScreen();
-        Display::printHeader("SMART DAILY ROUTINE TRACKER");
+        Canvas::wipeScreen();
+        Canvas::showBanner("SMART DAILY ROUTINE TRACKER");
 
-        // Quick stats overview on the main screen
-        if(manager_.totalCount() > 0)
+        if(orchestrator_.headcount() > 0)
         {
-            Display::printProgressBar(stats_.completionPercentage());
+            Canvas::showBar(insights_.progressRatio());
             std::cout << "  "
-                      << Color::GREEN << stats_.completedRoutines() << " routine(s) done"
-                      << Color::RESET << " | "
-                      << Color::YELLOW << stats_.pendingRoutines() << " routine(s) pending"
-                      << Color::RESET << " | "
-                      << stats_.totalRoutines() << " routine(s) total\n";
+                      << Palette::GREEN << insights_.doneCount() << " routine(s) done"
+                      << Palette::RESET << " | "
+                      << Palette::YELLOW << insights_.leftoverCount() << " routine(s) pending"
+                      << Palette::RESET << " | "
+                      << insights_.overallTally() << " routine(s) total\n";
         }
 
         std::cout << "\n";
-        Display::printMenuOption(1, "Routine Management");
-        Display::printMenuOption(2, "Statistics & Reports");
-        Display::printMenuOption(3, "Data Management");
-        Display::printMenuOption(0, "Exit");
+        Canvas::showOption(1, "Routine Management");
+        Canvas::showOption(2, "Statistics & Reports");
+        Canvas::showOption(3, "Data Management");
+        Canvas::showOption(0, "Exit");
 
-        int choice = Display::getChoice();
+        int choice = Canvas::grabChoice();
         switch(choice)
         {
-            case 1: routineManagement(); break;
-            case 2: statisticsReports(); break;
-            case 3: dataManagement(); break;
+            case 1: taskControls();  break;
+            case 2: insightPanel();  break;
+            case 3: vaultOps();      break;
             case 0:
-                // Auto-save on exit
-                if(data_mgr_.saveData(manager_))
-                {
-                    Display::printSuccess("Data saved automatically.");
-                }
-                Display::printInfo("Goodbye! Stay productive!");
+                if(vault_.persist(orchestrator_))
+                    Canvas::showOk("Data saved automatically.");
+                Canvas::showNote("Goodbye! Stay productive!");
                 return;
             default:
-                Display::printError("Invalid choice.");
+                Canvas::showFail("Invalid choice.");
         }
     }
 }
 
-// ============================================================================
-// Routine Management sub-menu
-// ============================================================================
-void Menu::routineManagement()
+void Navigator::taskControls()
 {
     while(true)
     {
-        Display::clearScreen();
-        Display::printHeader("ROUTINE MANAGEMENT");
+        Canvas::wipeScreen();
+        Canvas::showBanner("ROUTINE MANAGEMENT");
 
-        Display::printMenuOption(1, "Add New Routine");
-        Display::printMenuOption(2, "View All Routines");
-        Display::printMenuOption(3, "View Pending Routines");
-        Display::printMenuOption(4, "View Completed Routines");
-        Display::printMenuOption(5, "Mark Routine as Completed");
-        Display::printMenuOption(6, "Update Priority");
-        Display::printMenuOption(7, "Categorize Routine");
-        Display::printMenuOption(8, "Delete Routine");
-        Display::printMenuOption(9, "Search Routine");
-        Display::printMenuOption(0, "Back");
+        Canvas::showOption(1, "Add New Routine");
+        Canvas::showOption(2, "View All Routines");
+        Canvas::showOption(3, "View Pending Routines");
+        Canvas::showOption(4, "View Completed Routines");
+        Canvas::showOption(5, "Mark Routine as Completed");
+        Canvas::showOption(6, "Update Priority");
+        Canvas::showOption(7, "Categorize Routine");
+        Canvas::showOption(8, "Delete Routine");
+        Canvas::showOption(9, "Search Routine");
+        Canvas::showOption(0, "Back");
 
-        int choice = Display::getChoice();
+        int choice = Canvas::grabChoice();
         switch(choice)
         {
-            case 1: addNewRoutine();         break;
-            case 2: viewAllRoutines();       break;
-            case 3: viewPendingRoutines();   break;
-            case 4: viewCompletedRoutines(); break;
-            case 5: markRoutineCompleted();  break;
-            case 6: updateRoutinePriority(); break;
-            case 7: categorizeRoutine();     break;
-            case 8: deleteRoutine();         break;
-            case 9: searchRoutine();         break;
+            case 1: enrollNew();         break;
+            case 2: browseAll();         break;
+            case 3: browsePending();     break;
+            case 4: browseFinished();    break;
+            case 5: sealTask();          break;
+            case 6: reshuffleUrgency();  break;
+            case 7: relabelTask();       break;
+            case 8: discardTask();       break;
+            case 9: huntTask();          break;
             case 0: return;
-            default: Display::printError("Invalid choice.");
+            default: Canvas::showFail("Invalid choice.");
         }
     }
 }
 
-// ============================================================================
-// Statistics & Reports sub-menu
-// ============================================================================
-void Menu::statisticsReports()
+void Navigator::insightPanel()
 {
     while(true)
     {
-        Display::clearScreen();
-        Display::printHeader("STATISTICS & REPORTS");
+        Canvas::wipeScreen();
+        Canvas::showBanner("STATISTICS & REPORTS");
 
         std::cout << "\n";
-        Display::printMenuOption(1, "Total Routines");
-        Display::printMenuOption(2, "Completed Routines");
-        Display::printMenuOption(3, "Pending Routines");
-        Display::printMenuOption(4, "Completion Progress");
-        Display::printMenuOption(5, "Category-wise Report");
-        Display::printMenuOption(6, "Priority-wise Report");
-        Display::printMenuOption(0, "Back");
+        Canvas::showOption(1, "Total Routines");
+        Canvas::showOption(2, "Completed Routines");
+        Canvas::showOption(3, "Pending Routines");
+        Canvas::showOption(4, "Completion Progress");
+        Canvas::showOption(5, "Category-wise Report");
+        Canvas::showOption(6, "Priority-wise Report");
+        Canvas::showOption(0, "Back");
 
-        int choice = Display::getChoice();
+        int choice = Canvas::grabChoice();
         switch(choice)
         {
             case 1:
-                Display::printInfo("Total routines: " +
-                    std::to_string(stats_.totalRoutines()));
-                Display::pressEnterToContinue();
+                Canvas::showNote("Total routines: " +
+                    std::to_string(insights_.overallTally()));
+                Canvas::holdForEnter();
                 break;
             case 2:
             {
-                Display::printInfo("Completed: " +
-                    std::to_string(stats_.completedRoutines()));
-                auto names = stats_.completedRoutineNames();
+                Canvas::showNote("Completed: " +
+                    std::to_string(insights_.doneCount()));
+                auto names = insights_.doneNames();
                 if(!names.empty())
                 {
                     for(const auto& n : names)
-                        std::cout << "    " << Color::GREEN << "- " << n << Color::RESET << "\n";
+                        std::cout << "    " << Palette::GREEN << "- " << n << Palette::RESET << "\n";
                 }
-                Display::pressEnterToContinue();
+                Canvas::holdForEnter();
                 break;
             }
             case 3:
             {
-                Display::printInfo("Pending: " +
-                    std::to_string(stats_.pendingRoutines()));
-                auto names = stats_.pendingRoutineNames();
+                Canvas::showNote("Pending: " +
+                    std::to_string(insights_.leftoverCount()));
+                auto names = insights_.leftoverNames();
                 if(!names.empty())
                 {
                     for(const auto& n : names)
-                        std::cout << "    " << Color::YELLOW << "- " << n << Color::RESET << "\n";
+                        std::cout << "    " << Palette::YELLOW << "- " << n << Palette::RESET << "\n";
                 }
-                Display::pressEnterToContinue();
+                Canvas::holdForEnter();
                 break;
             }
             case 4:
             {
-                Display::printSubHeader("Completion Progress");
-                std::cout << "  Total activities committed: " << stats_.totalRoutines() << "\n";
-                std::cout << "  Activities completed:       " << Color::GREEN
-                          << stats_.completedRoutines() << Color::RESET << "\n";
-                std::cout << "  Activities remaining:       " << Color::YELLOW
-                          << stats_.pendingRoutines() << Color::RESET << "\n\n";
-                Display::printProgressBar(stats_.completionPercentage());
+                Canvas::showCaption("Completion Progress");
+                std::cout << "  Total activities committed: " << insights_.overallTally() << "\n";
+                std::cout << "  Activities completed:       " << Palette::GREEN
+                          << insights_.doneCount() << Palette::RESET << "\n";
+                std::cout << "  Activities remaining:       " << Palette::YELLOW
+                          << insights_.leftoverCount() << Palette::RESET << "\n\n";
+                Canvas::showBar(insights_.progressRatio());
 
-                // Show completed activity names
-                auto completed = stats_.completedRoutineNames();
+                auto completed = insights_.doneNames();
                 if(!completed.empty())
                 {
-                    std::cout << "\n  " << Color::GREEN << "Completed:" << Color::RESET << "\n";
+                    std::cout << "\n  " << Palette::GREEN << "Completed:" << Palette::RESET << "\n";
                     for(const auto& n : completed)
-                        std::cout << "    " << Color::GREEN << "- " << n << Color::RESET << "\n";
+                        std::cout << "    " << Palette::GREEN << "- " << n << Palette::RESET << "\n";
                 }
 
-                // Show remaining activity names
-                auto pending = stats_.pendingRoutineNames();
+                auto pending = insights_.leftoverNames();
                 if(!pending.empty())
                 {
-                    std::cout << "\n  " << Color::YELLOW << "Remaining:" << Color::RESET << "\n";
+                    std::cout << "\n  " << Palette::YELLOW << "Remaining:" << Palette::RESET << "\n";
                     for(const auto& n : pending)
-                        std::cout << "    " << Color::YELLOW << "- " << n << Color::RESET << "\n";
+                        std::cout << "    " << Palette::YELLOW << "- " << n << Palette::RESET << "\n";
                 }
 
-                // Appreciation when everything is done!
-                if(stats_.completionPercentage() >= 100.0
-                   && stats_.totalRoutines() > 0)
+                if(insights_.progressRatio() >= 100.0
+                   && insights_.overallTally() > 0)
                 {
-                    std::cout << "\n  " << Color::GREEN << Color::BOLD
+                    std::cout << "\n  " << Palette::GREEN << Palette::BOLD
                               << "*** ALL ROUTINES COMPLETE! ***"
-                              << Color::RESET << "\n";
-                    std::cout << "  " << Quotes::getAppreciationMessage() << "\n";
+                              << Palette::RESET << "\n";
+                    std::cout << "  " << Spark::pickPraise() << "\n";
                 }
-                Display::pressEnterToContinue();
+                Canvas::holdForEnter();
                 break;
             }
             case 5:
             {
-                Display::printSubHeader("Category-wise Report");
+                Canvas::showCaption("Category-wise Report");
 
-                // C++17: Structured bindings unpack the map pair
-                auto report = stats_.categoryDetailedReport();
+                auto report = insights_.labelBreakdown();
                 for(const auto& [category, names] : report)
                 {
-                    std::cout << "\n  " << Color::CYAN << Color::BOLD
-                              << category << Color::RESET
+                    std::cout << "\n  " << Palette::CYAN << Palette::BOLD
+                              << category << Palette::RESET
                               << " (" << names.size() << " routine(s)):\n";
                     for(const auto& name : names)
-                    {
                         std::cout << "    - " << name << "\n";
-                    }
                 }
                 std::cout << "\n";
-                Display::pressEnterToContinue();
+                Canvas::holdForEnter();
                 break;
             }
             case 6:
             {
-                Display::printSubHeader("Priority-wise Report");
+                Canvas::showCaption("Priority-wise Report");
 
-                auto report = stats_.priorityDetailedReport();
-                // C++17: Structured bindings
+                auto report = insights_.urgencyBreakdown();
                 for(const auto& [priority, names] : report)
                 {
-                    std::cout << "\n  " << Color::CYAN << Color::BOLD
-                              << priority << Color::RESET
+                    std::cout << "\n  " << Palette::CYAN << Palette::BOLD
+                              << priority << Palette::RESET
                               << " (" << names.size() << " routine(s)):\n";
                     for(const auto& name : names)
-                    {
                         std::cout << "    - " << name << "\n";
-                    }
                 }
                 std::cout << "\n";
-                Display::pressEnterToContinue();
+                Canvas::holdForEnter();
                 break;
             }
             case 0: return;
-            default: Display::printError("Invalid choice.");
+            default: Canvas::showFail("Invalid choice.");
         }
     }
 }
 
-// ============================================================================
-// Data Management sub-menu
-// ============================================================================
-void Menu::dataManagement()
+void Navigator::vaultOps()
 {
     while(true)
     {
-        Display::clearScreen();
-        Display::printHeader("DATA MANAGEMENT");
+        Canvas::wipeScreen();
+        Canvas::showBanner("DATA MANAGEMENT");
 
-        Display::printMenuOption(1, "Save Data");
-        Display::printMenuOption(2, "Load Data");
-        Display::printMenuOption(3, "Clear All Data");
-        Display::printMenuOption(0, "Back");
+        Canvas::showOption(1, "Save Data");
+        Canvas::showOption(2, "Load Data");
+        Canvas::showOption(3, "Clear All Data");
+        Canvas::showOption(0, "Back");
 
-        int choice = Display::getChoice();
+        int choice = Canvas::grabChoice();
         switch(choice)
         {
             case 1:
-                if(data_mgr_.saveData(manager_))
-                    Display::printSuccess("Data saved successfully to JSON file.");
+                if(vault_.persist(orchestrator_))
+                    Canvas::showOk("Data saved successfully to JSON file.");
                 else
-                    Display::printError("Failed to save data.");
-                Display::pressEnterToContinue();
+                    Canvas::showFail("Failed to save data.");
+                Canvas::holdForEnter();
                 break;
             case 2:
-                if(data_mgr_.loadData(manager_))
-                    Display::printSuccess("Data loaded successfully.");
+                if(vault_.restore(orchestrator_))
+                    Canvas::showOk("Data loaded successfully.");
                 else
-                    Display::printError("No saved data found or error loading.");
-                Display::pressEnterToContinue();
+                    Canvas::showFail("No saved data found or error loading.");
+                Canvas::holdForEnter();
                 break;
             case 3:
             {
-                std::string confirm = Display::getInput(
+                std::string confirm = Canvas::grabInput(
                     "Are you sure? Type 'yes' to confirm");
                 if(confirm == "yes" || confirm == "y")
                 {
-                    manager_.clearAll();
-                    Display::printSuccess("All data cleared.");
+                    orchestrator_.wipeSlate();
+                    Canvas::showOk("All data cleared.");
                 }
                 else
                 {
-                    Display::printInfo("Cancelled.");
+                    Canvas::showNote("Cancelled.");
                 }
-                Display::pressEnterToContinue();
+                Canvas::holdForEnter();
                 break;
             }
             case 0: return;
-            default: Display::printError("Invalid choice.");
+            default: Canvas::showFail("Invalid choice.");
         }
     }
 }
 
-// ============================================================================
-// ROUTINE SUB-ACTIONS
-// ============================================================================
-
-void Menu::addNewRoutine()
+void Navigator::enrollNew()
 {
-    Display::printSubHeader("Add New Routine");
+    Canvas::showCaption("Add New Routine");
 
-    std::string name = Display::getInput("Routine name");
+    std::string name = Canvas::grabInput("Routine name");
     if(name.empty())
     {
-        Display::printError("Name cannot be empty.");
-        Display::pressEnterToContinue();
+        Canvas::showFail("Name cannot be empty.");
+        Canvas::holdForEnter();
         return;
     }
 
-    std::string desc     = Display::getInput("Description (optional)");
-    std::string category = Display::getInput("Category (e.g., Health, Work, Study)");
+    std::string desc     = Canvas::grabInput("Description (optional)");
+    std::string category = Canvas::grabInput("Category (e.g., Health, Work, Study)");
 
     std::cout << "\n  Priority levels:\n";
     std::cout << "    1. Low   2. Medium   3. High   4. Critical\n";
-    int pri = Display::getIntInput("Priority", 1, 4);
+    int pri = Canvas::grabInt("Priority", 1, 4);
 
-    int freq = Display::getIntInput("Reminder frequency in hours (1-24)", 1, 24);
+    int freq = Canvas::grabInt("Reminder frequency in hours (1-24)", 1, 24);
 
-    // std::move transfers strings efficiently instead of copying them
-    int id = manager_.addRoutine(
+    int id = orchestrator_.enrollTask(
         std::move(name), std::move(desc),
-        std::move(category), static_cast<Priority>(pri), freq);
+        std::move(category), static_cast<Urgency>(pri), freq);
 
-    Display::printSuccess("Routine #" + std::to_string(id) + " created!");
-    Display::pressEnterToContinue();
+    Canvas::showOk("Routine #" + std::to_string(id) + " created!");
+    Canvas::holdForEnter();
 }
 
-void Menu::viewAllRoutines()
+void Navigator::browseAll()
 {
-    Display::printSubHeader("All Routines");
-    Display::printRoutineList(manager_.getAllRoutines());
-    Display::pressEnterToContinue();
+    Canvas::showCaption("All Routines");
+    Canvas::showEntryList(orchestrator_.fetchAll());
+    Canvas::holdForEnter();
 }
 
-void Menu::viewPendingRoutines()
+void Navigator::browsePending()
 {
-    Display::printSubHeader("Pending Routines");
-    Display::printRoutineList(manager_.getPendingRoutines());
-    Display::pressEnterToContinue();
+    Canvas::showCaption("Pending Routines");
+    Canvas::showEntryList(orchestrator_.fetchPending());
+    Canvas::holdForEnter();
 }
 
-void Menu::viewCompletedRoutines()
+void Navigator::browseFinished()
 {
-    Display::printSubHeader("Completed Routines");
-    Display::printRoutineList(manager_.getCompletedRoutines());
-    Display::pressEnterToContinue();
+    Canvas::showCaption("Completed Routines");
+    Canvas::showEntryList(orchestrator_.fetchFinished());
+    Canvas::holdForEnter();
 }
 
-void Menu::markRoutineCompleted()
+void Navigator::sealTask()
 {
-    Display::printSubHeader("Mark as Completed");
+    Canvas::showCaption("Mark as Completed");
 
-    auto pending = manager_.getPendingRoutines();
+    auto pending = orchestrator_.fetchPending();
     if(pending.empty())
     {
-        Display::printInfo("No pending routines.");
-        Display::pressEnterToContinue();
+        Canvas::showNote("No pending routines.");
+        Canvas::holdForEnter();
         return;
     }
 
-    Display::printRoutineList(pending);
+    Canvas::showEntryList(pending);
 
-    int id = Display::getIntInput("Enter Routine ID to complete", 1, 99999);
+    int id = Canvas::grabInt("Enter Routine ID to complete", 1, 99999);
 
-    // C++17: std::optional - safely check if the routine exists
-    auto routine = manager_.getRoutineById(id);
-    if(!routine.has_value())
+    auto entry = orchestrator_.pluckById(id);
+    if(!entry.has_value())
     {
-        Display::printError("Routine not found.");
-        Display::pressEnterToContinue();
+        Canvas::showFail("Routine not found.");
+        Canvas::holdForEnter();
         return;
     }
 
-    if(manager_.markCompleted(id))
+    if(orchestrator_.sealAsDone(id))
     {
-        Display::printSuccess("Routine #" + std::to_string(id) + " marked as completed!");
+        Canvas::showOk("Routine #" + std::to_string(id) + " marked as completed!");
 
-        // Appreciation message (makes user feel good!)
-        std::cout << "\n  " << Color::GREEN
-                  << Quotes::getAppreciationMessage()
-                  << Color::RESET << "\n";
+        std::cout << "\n  " << Palette::GREEN
+                  << Spark::pickPraise()
+                  << Palette::RESET << "\n";
 
-        // Show real-world benefit of the category
-        if(!routine.value().category.empty())
+        if(!entry.value().category.empty())
         {
-            std::cout << "  " << Color::CYAN
-                      << Quotes::getBenefitMessage(routine.value().category)
-                      << Color::RESET << "\n";
+            std::cout << "  " << Palette::CYAN
+                      << Spark::pickPerks(entry.value().category)
+                      << Palette::RESET << "\n";
         }
 
-        // Check if ALL routines are now complete
-        if(manager_.pendingCount() == 0 && manager_.totalCount() > 0)
+        if(orchestrator_.awaitingCount() == 0 && orchestrator_.headcount() > 0)
         {
-            std::cout << "\n  " << Color::GREEN << Color::BOLD
+            std::cout << "\n  " << Palette::GREEN << Palette::BOLD
                       << "*** ALL ROUTINES COMPLETE! YOU'RE A STAR! ***"
-                      << Color::RESET << "\n";
+                      << Palette::RESET << "\n";
         }
     }
     else
     {
-        Display::printError("Failed to mark routine.");
+        Canvas::showFail("Failed to mark routine.");
     }
-    Display::pressEnterToContinue();
+    Canvas::holdForEnter();
 }
 
-void Menu::updateRoutinePriority()
+void Navigator::reshuffleUrgency()
 {
-    Display::printSubHeader("Update Priority");
-    Display::printRoutineList(manager_.getAllRoutines());
+    Canvas::showCaption("Update Priority");
+    Canvas::showEntryList(orchestrator_.fetchAll());
 
-    int id = Display::getIntInput("Enter Routine ID", 1, 99999);
+    int id = Canvas::grabInt("Enter Routine ID", 1, 99999);
     std::cout << "    1. Low   2. Medium   3. High   4. Critical\n";
-    int pri = Display::getIntInput("New priority", 1, 4);
+    int pri = Canvas::grabInt("New priority", 1, 4);
 
-    if(manager_.updatePriority(id, static_cast<Priority>(pri)))
-        Display::printSuccess("Priority updated!");
+    if(orchestrator_.shiftUrgency(id, static_cast<Urgency>(pri)))
+        Canvas::showOk("Priority updated!");
     else
-        Display::printError("Routine not found.");
-    Display::pressEnterToContinue();
+        Canvas::showFail("Routine not found.");
+    Canvas::holdForEnter();
 }
 
-void Menu::categorizeRoutine()
+void Navigator::relabelTask()
 {
-    Display::printSubHeader("Categorize Routine");
-    Display::printRoutineList(manager_.getAllRoutines());
+    Canvas::showCaption("Categorize Routine");
+    Canvas::showEntryList(orchestrator_.fetchAll());
 
-    int id = Display::getIntInput("Enter Routine ID", 1, 99999);
-    std::string category = Display::getInput("New category");
+    int id = Canvas::grabInt("Enter Routine ID", 1, 99999);
+    std::string category = Canvas::grabInput("New category");
 
-    if(manager_.categorizeRoutine(id, category))
-        Display::printSuccess("Category updated!");
+    if(orchestrator_.relabelTask(id, category))
+        Canvas::showOk("Category updated!");
     else
-        Display::printError("Routine not found.");
-    Display::pressEnterToContinue();
+        Canvas::showFail("Routine not found.");
+    Canvas::holdForEnter();
 }
 
-void Menu::deleteRoutine()
+void Navigator::discardTask()
 {
-    Display::printSubHeader("Delete Routine");
-    Display::printRoutineList(manager_.getAllRoutines());
+    Canvas::showCaption("Delete Routine");
+    Canvas::showEntryList(orchestrator_.fetchAll());
 
-    int id = Display::getIntInput("Enter Routine ID to delete", 1, 99999);
-    std::string confirm = Display::getInput("Are you sure? (yes/no)");
+    int id = Canvas::grabInt("Enter Routine ID to delete", 1, 99999);
+    std::string confirm = Canvas::grabInput("Are you sure? (yes/no)");
 
     if(confirm == "yes" || confirm == "y")
     {
-        if(manager_.deleteRoutine(id))
-            Display::printSuccess("Routine deleted.");
+        if(orchestrator_.discardTask(id))
+            Canvas::showOk("Routine deleted.");
         else
-            Display::printError("Routine not found.");
+            Canvas::showFail("Routine not found.");
     }
     else
     {
-        Display::printInfo("Cancelled.");
+        Canvas::showNote("Cancelled.");
     }
-    Display::pressEnterToContinue();
+    Canvas::holdForEnter();
 }
 
-void Menu::searchRoutine()
+void Navigator::huntTask()
 {
-    Display::printSubHeader("Search Routines");
-    std::string keyword = Display::getInput("Search keyword");
+    Canvas::showCaption("Search Routines");
+    std::string keyword = Canvas::grabInput("Search keyword");
 
     if(keyword.empty())
     {
-        Display::printError("Please enter a keyword.");
-        Display::pressEnterToContinue();
+        Canvas::showFail("Please enter a keyword.");
+        Canvas::holdForEnter();
         return;
     }
 
-    auto results = manager_.searchRoutines(keyword);
-    Display::printInfo("Found " + std::to_string(results.size()) + " result(s):");
-    Display::printRoutineList(results);
-    Display::pressEnterToContinue();
+    auto results = orchestrator_.huntByKeyword(keyword);
+    Canvas::showNote("Found " + std::to_string(results.size()) + " result(s):");
+    Canvas::showEntryList(results);
+    Canvas::holdForEnter();
 }

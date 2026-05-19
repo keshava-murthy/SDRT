@@ -1,20 +1,14 @@
 #include "quotes.h"
 #include <vector>
-#include <random>       // C++11: better random number generation
-#include <chrono>       // C++11: chrono-based seeding
-#include <algorithm>    // for std::transform
-#include <utility>      // for std::pair
+#include <random>
+#include <chrono>
+#include <algorithm>
+#include <utility>
 
-namespace Quotes
+namespace Spark
 {
 
-// ============================================================================
-// C++11: std::initializer_list (used implicitly) to initialize vectors
-//   This brace-initialization syntax constructs the vector from a list
-// ============================================================================
-
-// Motivational quotes shown at startup
-static const std::vector<std::string> motivational_quotes = {
+static const std::vector<std::string> motivators = {
     "\"Remember RCB waited for 18 years to win the trophy.\" - Keshavamurthy",
     "\"The secret of getting ahead is getting started.\" - Mark Twain",
     "\"It always seems impossible until it's done.\" - Nelson Mandela",
@@ -30,8 +24,7 @@ static const std::vector<std::string> motivational_quotes = {
     "\"Today is a good day to start something amazing!\""
 };
 
-// Appreciation messages when user completes a routine
-static const std::vector<std::string> appreciation_messages = {
+static const std::vector<std::string> praises = {
     "Awesome job! You crushed it!",
     "Fantastic! Keep that momentum going!",
     "You're on fire! Another one done!",
@@ -42,8 +35,7 @@ static const std::vector<std::string> appreciation_messages = {
     "Way to go! You should be proud!"
 };
 
-// C++11: std::pair used in the vector - maps category keywords to benefit messages
-static const std::vector<std::pair<std::string, std::string>> benefit_messages = {
+static const std::vector<std::pair<std::string, std::string>> perks_map = {
     {"health",   "Taking care of your health is the best investment. Your body thanks you!"},
     {"exercise", "Exercise boosts energy, mood, and focus. You're building a stronger you!"},
     {"fitness",  "Fitness builds discipline and energy. You're investing in yourself!"},
@@ -59,14 +51,8 @@ static const std::vector<std::pair<std::string, std::string>> benefit_messages =
     {"meditat",  "Meditation brings clarity and calm. Your mind thanks you!"}
 };
 
-// ============================================================================
-// C++11: Random number generation
-//   std::mt19937 is a high-quality random engine (Mersenne Twister)
-//   Much better than the old C-style rand() function
-// ============================================================================
-static int getRandomIndex(int max_exclusive)
+static int rollIndex(int max_exclusive)
 {
-    // C++11: seed with chrono clock for unpredictable results
     static std::mt19937 rng(
         static_cast<unsigned>(
             std::chrono::steady_clock::now().time_since_epoch().count()));
@@ -75,38 +61,29 @@ static int getRandomIndex(int max_exclusive)
     return dist(rng);
 }
 
-std::string getRandomQuote()
+std::string pickMotivator()
 {
-    return motivational_quotes[
-        getRandomIndex(static_cast<int>(motivational_quotes.size()))];
+    return motivators[rollIndex(static_cast<int>(motivators.size()))];
 }
 
-std::string getAppreciationMessage()
+std::string pickPraise()
 {
-    return appreciation_messages[
-        getRandomIndex(static_cast<int>(appreciation_messages.size()))];
+    return praises[rollIndex(static_cast<int>(praises.size()))];
 }
 
-// ============================================================================
-// Get a real-world benefit message based on the routine's category
-//   C++17: Structured bindings [key, message] unpack the pair cleanly
-// ============================================================================
-std::string getBenefitMessage(const std::string& category)
+std::string pickPerks(const std::string& category)
 {
     std::string lower_cat = category;
     std::transform(lower_cat.begin(), lower_cat.end(),
                    lower_cat.begin(), ::tolower);
 
-    // C++17: Structured bindings - unpack std::pair into named variables
-    for(const auto& [key, message] : benefit_messages)
+    for(const auto& [key, message] : perks_map)
     {
         if(lower_cat.find(key) != std::string::npos)
-        {
             return message;
-        }
     }
 
     return "Great job completing this routine! Every step counts!";
 }
 
-}  // namespace Quotes
+}

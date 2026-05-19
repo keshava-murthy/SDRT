@@ -1,85 +1,68 @@
 #include "display.h"
 #include <iostream>
-#include <iomanip>   // for std::setw, std::setprecision, std::fixed
-#include <limits>    // for std::numeric_limits (input validation)
+#include <iomanip>
+#include <limits>
 
-namespace Display
+namespace Canvas
 {
 
-// ============================================================================
-// Print a bold, centered header with separators
-// ============================================================================
-void printHeader(const std::string& title)
+void showBanner(const std::string& title)
 {
     std::cout << "\n";
-    printSeparator('=', 45);
+    drawLine('=', 45);
 
-    // Center the title text
     int padding = (45 - static_cast<int>(title.size())) / 2;
-    std::cout << Color::BOLD << Color::CYAN;
+    std::cout << Palette::BOLD << Palette::CYAN;
     for(int i = 0; i < padding; ++i) std::cout << ' ';
-    std::cout << title << Color::RESET << "\n";
+    std::cout << title << Palette::RESET << "\n";
 
-    printSeparator('=', 45);
+    drawLine('=', 45);
 }
 
-void printSubHeader(const std::string& title)
+void showCaption(const std::string& title)
 {
-    std::cout << "\n  " << Color::BOLD << Color::BLUE
-              << title << Color::RESET << "\n";
+    std::cout << "\n  " << Palette::BOLD << Palette::BLUE
+              << title << Palette::RESET << "\n";
     std::cout << "  ";
     for(int i = 0; i < 40; ++i) std::cout << '-';
     std::cout << "\n";
 }
 
-// ============================================================================
-// Menu option: "0. Back" is dimmed, others are green-numbered
-// ============================================================================
-void printMenuOption(int num, const std::string& text)
+void showOption(int num, const std::string& text)
 {
     if(num == 0)
     {
-        std::cout << "  " << Color::DIM << num << ". " << text
-                  << Color::RESET << "\n";
+        std::cout << "  " << Palette::DIM << num << ". " << text
+                  << Palette::RESET << "\n";
     }
     else
     {
-        std::cout << "  " << Color::GREEN << num << Color::RESET
+        std::cout << "  " << Palette::GREEN << num << Palette::RESET
                   << ". " << text << "\n";
     }
 }
 
-// ============================================================================
-// Status messages with icons and colors
-// ============================================================================
-void printSuccess(const std::string& msg)
+void showOk(const std::string& msg)
 {
-    std::cout << Color::GREEN << "  [OK] " << msg << Color::RESET << "\n";
+    std::cout << Palette::GREEN << "  [OK] " << msg << Palette::RESET << "\n";
 }
 
-void printError(const std::string& msg)
+void showFail(const std::string& msg)
 {
-    std::cout << Color::RED << "  [ERROR] " << msg << Color::RESET << "\n";
+    std::cout << Palette::RED << "  [ERROR] " << msg << Palette::RESET << "\n";
 }
 
-void printWarning(const std::string& msg)
+void showAlert(const std::string& msg)
 {
-    std::cout << Color::YELLOW << "  [!] " << msg << Color::RESET << "\n";
+    std::cout << Palette::YELLOW << "  [!] " << msg << Palette::RESET << "\n";
 }
 
-void printInfo(const std::string& msg)
+void showNote(const std::string& msg)
 {
-    std::cout << Color::CYAN << "  [i] " << msg << Color::RESET << "\n";
+    std::cout << Palette::CYAN << "  [i] " << msg << Palette::RESET << "\n";
 }
 
-// ============================================================================
-// Progress bar: visual percentage indicator
-//
-//   Example output:  [████████████░░░░░░░░░░░░░░░░░░] 40.0%
-//
-//   The bar fills with green blocks proportional to the percentage
-// ============================================================================
-void printProgressBar(double percentage, int width)
+void showBar(double percentage, int width)
 {
     if(percentage < 0.0) percentage = 0.0;
     if(percentage > 100.0) percentage = 100.0;
@@ -90,102 +73,82 @@ void printProgressBar(double percentage, int width)
     for(int i = 0; i < width; ++i)
     {
         if(i < filled)
-            std::cout << Color::GREEN << "#" << Color::RESET;
+            std::cout << Palette::GREEN << "#" << Palette::RESET;
         else
-            std::cout << Color::DIM << "-" << Color::RESET;
+            std::cout << Palette::DIM << "-" << Palette::RESET;
     }
-    std::cout << "] " << Color::BOLD
+    std::cout << "] " << Palette::BOLD
               << std::fixed << std::setprecision(1)
-              << percentage << "%" << Color::RESET << "\n";
+              << percentage << "%" << Palette::RESET << "\n";
 }
 
-// ============================================================================
-// Print a single routine with all its details, color-coded
-// ============================================================================
-void printRoutine(const Routine& r)
+void showEntry(const TaskEntry& t)
 {
-    // Status indicator
-    std::string status = r.completed
-        ? (std::string(Color::GREEN) + "[DONE]" + Color::RESET)
-        : (std::string(Color::YELLOW) + "[PENDING]" + Color::RESET);
+    std::string status = t.finished
+        ? (std::string(Palette::GREEN) + "[DONE]" + Palette::RESET)
+        : (std::string(Palette::YELLOW) + "[PENDING]" + Palette::RESET);
 
-    // Priority color
-    const char* pri_color = Color::WHITE;
-    switch(r.priority)
+    const char* urg_color = Palette::WHITE;
+    switch(t.urgency)
     {
-        case Priority::LOW:      pri_color = Color::DIM;    break;
-        case Priority::MEDIUM:   pri_color = Color::BLUE;   break;
-        case Priority::HIGH:     pri_color = Color::YELLOW; break;
-        case Priority::CRITICAL: pri_color = Color::RED;    break;
+        case Urgency::LOW:      urg_color = Palette::DIM;    break;
+        case Urgency::MEDIUM:   urg_color = Palette::BLUE;   break;
+        case Urgency::HIGH:     urg_color = Palette::YELLOW; break;
+        case Urgency::CRITICAL: urg_color = Palette::RED;    break;
     }
 
-    std::cout << "  " << Color::BOLD << "#" << r.id << Color::RESET
+    std::cout << "  " << Palette::BOLD << "#" << t.id << Palette::RESET
               << "  " << status
-              << "  " << pri_color << Routine::priorityToString(r.priority)
-              << Color::RESET << "\n";
+              << "  " << urg_color << TaskEntry::urgencyLabel(t.urgency)
+              << Palette::RESET << "\n";
 
-    std::cout << "     " << Color::BOLD << r.name << Color::RESET << "\n";
+    std::cout << "     " << Palette::BOLD << t.name << Palette::RESET << "\n";
 
-    if(!r.description.empty())
-        std::cout << "     " << Color::DIM << r.description << Color::RESET << "\n";
+    if(!t.description.empty())
+        std::cout << "     " << Palette::DIM << t.description << Palette::RESET << "\n";
 
-    if(!r.category.empty())
-        std::cout << "     Category: " << r.category << "\n";
+    if(!t.category.empty())
+        std::cout << "     Category: " << t.category << "\n";
 
-    std::cout << "     Created: " << r.created_at << "\n";
+    std::cout << "     Created: " << t.born_at << "\n";
 
-    if(r.completed && !r.completed_at.empty())
-        std::cout << "     Completed: " << r.completed_at << "\n";
+    if(t.finished && !t.sealed_at.empty())
+        std::cout << "     Completed: " << t.sealed_at << "\n";
 
-    // C++17: optional::has_value() - check before accessing
-    if(r.reminder_time.has_value())
-        std::cout << "     Reminder: " << r.reminder_time.value() << "\n";
+    if(t.alert_moment.has_value())
+        std::cout << "     Reminder: " << t.alert_moment.value() << "\n";
 
     std::cout << "\n";
 }
 
-// ============================================================================
-// Print a list of routines (or "no routines" message)
-// ============================================================================
-void printRoutineList(const std::vector<Routine>& routines)
+void showEntryList(const std::vector<TaskEntry>& entries)
 {
-    if(routines.empty())
+    if(entries.empty())
     {
-        printInfo("No routines found.");
+        showNote("No routines found.");
         return;
     }
 
-    // C++11: Range-based for loop
-    for(const auto& r : routines)
-    {
-        printRoutine(r);
-    }
+    for(const auto& e : entries)
+        showEntry(e);
 }
 
-void printSeparator(char ch, int width)
+void drawLine(char ch, int width)
 {
-    std::cout << Color::DIM;
+    std::cout << Palette::DIM;
     for(int i = 0; i < width; ++i)
-    {
         std::cout << ch;
-    }
-    std::cout << Color::RESET << "\n";
+    std::cout << Palette::RESET << "\n";
 }
 
-// ============================================================================
-// Clear the terminal screen (ANSI escape sequence)
-// ============================================================================
-void clearScreen()
+void wipeScreen()
 {
     std::cout << "\033[2J\033[H";
 }
 
-// ============================================================================
-// Input helpers with validation
-// ============================================================================
-int getChoice()
+int grabChoice()
 {
-    std::cout << "\n  " << Color::CYAN << "Enter Choice: " << Color::RESET;
+    std::cout << "\n  " << Palette::CYAN << "Enter Choice: " << Palette::RESET;
     int choice;
     if(!(std::cin >> choice))
     {
@@ -197,20 +160,20 @@ int getChoice()
     return choice;
 }
 
-std::string getInput(const std::string& prompt)
+std::string grabInput(const std::string& prompt)
 {
-    std::cout << "  " << Color::CYAN << prompt << ": " << Color::RESET;
+    std::cout << "  " << Palette::CYAN << prompt << ": " << Palette::RESET;
     std::string input;
     std::getline(std::cin, input);
     return input;
 }
 
-int getIntInput(const std::string& prompt, int min_val, int max_val)
+int grabInt(const std::string& prompt, int min_val, int max_val)
 {
     while(true)
     {
-        std::cout << "  " << Color::CYAN << prompt
-                  << " (" << min_val << "-" << max_val << "): " << Color::RESET;
+        std::cout << "  " << Palette::CYAN << prompt
+                  << " (" << min_val << "-" << max_val << "): " << Palette::RESET;
         int val;
         if(std::cin >> val && val >= min_val && val <= max_val)
         {
@@ -219,15 +182,15 @@ int getIntInput(const std::string& prompt, int min_val, int max_val)
         }
         std::cin.clear();
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        printError("Invalid input. Please try again.");
+        showFail("Invalid input. Please try again.");
     }
 }
 
-void pressEnterToContinue()
+void holdForEnter()
 {
-    std::cout << "\n  " << Color::DIM << "Press Enter to continue..."
-              << Color::RESET;
+    std::cout << "\n  " << Palette::DIM << "Press Enter to continue..."
+              << Palette::RESET;
     std::cin.get();
 }
 
-}  // namespace Display
+}

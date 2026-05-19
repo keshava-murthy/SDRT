@@ -4,6 +4,13 @@ A **Modern C++ console-based productivity system** where you can create daily ro
 
 ---
 
+## Rough design can be found here :
+https://excalidraw.com/#json=c8JwvBUjznksa-HvseEh2,kXmWaAYHlnQQw6ThHBDR4w
+
+---
+
+---
+
 ## Quick Start
 
 ```bash
@@ -93,10 +100,3 @@ Saved in `data/routines.json`:
     ]
 }
 ```
-
----
-
-## Rough design can be found here :
-https://excalidraw.com/#json=c8JwvBUjznksa-HvseEh2,kXmWaAYHlnQQw6ThHBDR4w
-
----
