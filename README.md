@@ -1,6 +1,6 @@
 # Smart Daily Routine Tracker (SDRT)
 
-A **Modern C++ console-based productivity system** where you can create daily routines, assign priorities, track progress, and get reminders — all from the terminal.
+A **Modern C++ console-based productivity system** where you can create daily routines, assign priorities, track progress, and manage your day — all from the terminal.
 
 ---
 
@@ -11,7 +11,7 @@ make          # build the project
 make run      # run the application
 ```
 
-**Requirements:** g++ 11+ with C++17 support, pthreads (standard on Linux/Mac)
+**Requirements:** g++ 11+ with C++17 support
 
 
 ## Features
@@ -22,23 +22,23 @@ make run      # run the application
 - **Mark** routines as completed (with appreciation messages!)
 - **Update** priority, **categorize**, **delete**, or **search** routines
 
-### 2. Reminder Management
-- **Background thread** checks pending routines every 30 seconds
-- Notifications **pile up** until you view them
-- Once viewed, notifications **disappear** (as designed)
-- Register custom **callbacks** (lambda functions) for reminders
-
-### 3. Statistics & Reports
+### 2. Statistics & Reports
 - Total / Completed / Pending counts
 - **Visual progress bar** with percentage
 - Category-wise and Priority-wise breakdowns
 - Appreciation message when you hit 100%
 
-### 4. Data Management
+### 3. Data Management
 - **Save** routines to a JSON file (`data/routines.json`)
 - **Load** routines from the JSON file
 - **Auto-save** on exit
 - Clear all data with confirmation
+
+### 4. Reminder Service (Coming Soon)
+> The **Reminder Service** will be implemented in a future update using C++ threading
+> concepts (`std::thread`, `std::mutex`, `std::condition_variable`, `std::atomic`).
+> It will run a background thread to periodically check pending routines and notify
+> the user with piled-up reminders.
 
 
 ## Detailed Flow
@@ -47,14 +47,6 @@ make run      # run the application
 1. User enters name, description, category, priority (1-4), and reminder frequency
 2. Routine is stored in a `std::vector` with a unique auto-incrementing ID
 3. An `unordered_map` index is maintained for O(1) lookup by ID
-
-### Reminder Thread
-1. When started, a `std::thread` runs a loop in the background
-2. Every 30 seconds, it checks all pending routines
-3. For each pending routine, a notification string is generated and stored
-4. Notifications pile up in a vector, protected by a mutex
-5. When the user views notifications, they are displayed and cleared
-6. The thread uses `condition_variable::wait_for` so it can be stopped instantly
 
 ### Data Persistence
 1. Routines are serialized to JSON using `nlohmann/json` (json.hpp)
@@ -105,6 +97,6 @@ Saved in `data/routines.json`:
 ---
 
 ## Rough design can be found here :
-https://excalidraw.com/#json=PYpYex46ricb1qbo2RfwG,85zHPfR7TV1FdMmGprR2-Q
+https://excalidraw.com/#json=c8JwvBUjznksa-HvseEh2,kXmWaAYHlnQQw6ThHBDR4w
 
 ---

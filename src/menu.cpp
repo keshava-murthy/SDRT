@@ -8,10 +8,8 @@
 // ============================================================================
 // Constructor: store references to all core components
 // ============================================================================
-Menu::Menu(RoutineManager& mgr, ReminderService& rem,
-           Statistics& st, DataManager& dm)
+Menu::Menu(RoutineManager& mgr, Statistics& st, DataManager& dm)
     : manager_(mgr)
-    , reminder_(rem)
     , stats_(st)
     , data_mgr_(dm)
 {
@@ -62,43 +60,31 @@ void Menu::mainMenu()
         {
             Display::printProgressBar(stats_.completionPercentage());
             std::cout << "  "
-                      << Color::GREEN << stats_.completedRoutines() << " done"
+                      << Color::GREEN << stats_.completedRoutines() << " routine(s) done"
                       << Color::RESET << " | "
-                      << Color::YELLOW << stats_.pendingRoutines() << " pending"
+                      << Color::YELLOW << stats_.pendingRoutines() << " routine(s) pending"
                       << Color::RESET << " | "
-                      << stats_.totalRoutines() << " total\n";
-        }
-
-        // Notification badge (shows count of piled-up reminders)
-        size_t notif_count = reminder_.notificationCount();
-        if(notif_count > 0)
-        {
-            std::cout << "  " << Color::RED << Color::BOLD
-                      << ">> " << notif_count << " notification(s) <<"
-                      << Color::RESET << "\n";
+                      << stats_.totalRoutines() << " routine(s) total\n";
         }
 
         std::cout << "\n";
         Display::printMenuOption(1, "Routine Management");
-        Display::printMenuOption(2, "Reminder Management");
-        Display::printMenuOption(3, "Statistics & Reports");
-        Display::printMenuOption(4, "Data Management");
+        Display::printMenuOption(2, "Statistics & Reports");
+        Display::printMenuOption(3, "Data Management");
         Display::printMenuOption(0, "Exit");
 
         int choice = Display::getChoice();
         switch(choice)
         {
             case 1: routineManagement(); break;
-            case 2: reminderManagement(); break;
-            case 3: statisticsReports(); break;
-            case 4: dataManagement(); break;
+            case 2: statisticsReports(); break;
+            case 3: dataManagement(); break;
             case 0:
                 // Auto-save on exit
                 if(data_mgr_.saveData(manager_))
                 {
                     Display::printSuccess("Data saved automatically.");
                 }
-                reminder_.stop();
                 Display::printInfo("Goodbye! Stay productive!");
                 return;
             default:
@@ -140,79 +126,6 @@ void Menu::routineManagement()
             case 7: categorizeRoutine();     break;
             case 8: deleteRoutine();         break;
             case 9: searchRoutine();         break;
-            case 0: return;
-            default: Display::printError("Invalid choice.");
-        }
-    }
-}
-
-// ============================================================================
-// Reminder Management sub-menu
-// ============================================================================
-void Menu::reminderManagement()
-{
-    while(true)
-    {
-        Display::clearScreen();
-        Display::printHeader("REMINDER MANAGEMENT");
-
-        // Show service status
-        std::string status = reminder_.isRunning()
-            ? (std::string(Color::GREEN) + "RUNNING" + Color::RESET)
-            : (std::string(Color::RED)   + "STOPPED" + Color::RESET);
-        std::cout << "  Service Status: " << status << "\n\n";
-
-        Display::printMenuOption(1, "Start Reminder Service");
-        Display::printMenuOption(2, "Stop Reminder Service");
-        Display::printMenuOption(3, "View Notifications");
-        Display::printMenuOption(4, "Clear Notifications");
-        Display::printMenuOption(5, "Add Reminder Callback");
-        Display::printMenuOption(0, "Back");
-
-        int choice = Display::getChoice();
-        switch(choice)
-        {
-            case 1:
-                reminder_.start();
-                Display::printSuccess("Reminder service started! (checks every 30s)");
-                Display::pressEnterToContinue();
-                break;
-            case 2:
-                reminder_.stop();
-                Display::printSuccess("Reminder service stopped.");
-                Display::pressEnterToContinue();
-                break;
-            case 3:
-                // Show notifications, then clear them (design: disappear once viewed)
-                reminder_.executeNotifications();
-                if(reminder_.notificationCount() > 0)
-                {
-                    reminder_.clearNotifications();
-                    Display::printInfo("Notifications cleared after viewing.");
-                }
-                Display::pressEnterToContinue();
-                break;
-            case 4:
-                reminder_.clearNotifications();
-                Display::printSuccess("All notifications cleared.");
-                Display::pressEnterToContinue();
-                break;
-            case 5:
-            {
-                // C++11: Lambda as callback - demonstrates function wrappers
-                std::string label = Display::getInput("Callback label (e.g., 'Logger')");
-
-                reminder_.addCallback(
-                    [label](const Routine& r)
-                    {
-                        std::cout << Color::DIM << "  [" << label << "] Reminder for: "
-                                  << r.name << Color::RESET << "\n";
-                    });
-
-                Display::printSuccess("Callback '" + label + "' registered.");
-                Display::pressEnterToContinue();
-                break;
-            }
             case 0: return;
             default: Display::printError("Invalid choice.");
         }
@@ -435,12 +348,9 @@ void Menu::addNewRoutine()
     std::cout << "    1. Low   2. Medium   3. High   4. Critical\n";
     int pri = Display::getIntInput("Priority", 1, 4);
 
-    std::cout << "\n  " << Color::DIM
-              << "(Note: In this demo, frequency is in seconds for quick testing."
-              << " In production, this would be hours.)" << Color::RESET << "\n";
-    int freq = Display::getIntInput("Reminder check interval in seconds for demo (1-24)", 1, 24);
+    int freq = Display::getIntInput("Reminder frequency in hours (1-24)", 1, 24);
 
-    // C++11: std::move transfers strings efficiently into the manager
+    // std::move transfers strings efficiently instead of copying them
     int id = manager_.addRoutine(
         std::move(name), std::move(desc),
         std::move(category), static_cast<Priority>(pri), freq);

@@ -1,5 +1,5 @@
 #include "routine_manager.h"
-#include <algorithm>  // for std::count_if
+#include <algorithm>  // for std::count_if, std::transform
 
 // ============================================================================
 // Constructor: start IDs at 1
@@ -23,20 +23,16 @@ void RoutineManager::rebuildIndex()
 
 // ============================================================================
 // Add a new routine
-//   C++11: lock_guard - RAII-based locking
-//     The mutex is automatically released when lock goes out of scope,
-//     even if an exception is thrown. No risk of forgetting to unlock!
+//   emplace_back constructs the Routine directly in the vector, avoiding
+//   unnecessary copies. std::move transfers string ownership efficiently.
 // ============================================================================
 int RoutineManager::addRoutine(std::string name, std::string desc,
                                 std::string category, Priority priority,
                                 int freq_hours)
 {
-    std::lock_guard<std::mutex> lock(mtx_);
-
     int id = next_id_++;
 
-    // C++11: emplace_back constructs the Routine directly inside the vector
-    //   (avoids creating a temporary and then copying/moving it)
+    // emplace_back constructs the object in-place inside the vector
     routines_.emplace_back(id, std::move(name), std::move(desc),
                            std::move(category), priority, freq_hours);
 
@@ -49,13 +45,11 @@ int RoutineManager::addRoutine(std::string name, std::string desc,
 // ============================================================================
 bool RoutineManager::deleteRoutine(int id)
 {
-    std::lock_guard<std::mutex> lock(mtx_);
-
     auto it = id_index_.find(id);
     if(it == id_index_.end()) return false;
 
     routines_.erase(routines_.begin() + static_cast<long>(it->second));
-    rebuildIndex();  // indices shifted, rebuild the map
+    rebuildIndex();  // indices shifted after erase, so rebuild the map
     return true;
 }
 
@@ -64,8 +58,6 @@ bool RoutineManager::deleteRoutine(int id)
 // ============================================================================
 bool RoutineManager::markCompleted(int id)
 {
-    std::lock_guard<std::mutex> lock(mtx_);
-
     auto it = id_index_.find(id);
     if(it == id_index_.end()) return false;
 
@@ -79,8 +71,6 @@ bool RoutineManager::markCompleted(int id)
 // ============================================================================
 bool RoutineManager::updatePriority(int id, Priority new_priority)
 {
-    std::lock_guard<std::mutex> lock(mtx_);
-
     auto it = id_index_.find(id);
     if(it == id_index_.end()) return false;
 
@@ -93,8 +83,6 @@ bool RoutineManager::updatePriority(int id, Priority new_priority)
 // ============================================================================
 bool RoutineManager::categorizeRoutine(int id, const std::string& category)
 {
-    std::lock_guard<std::mutex> lock(mtx_);
-
     auto it = id_index_.find(id);
     if(it == id_index_.end()) return false;
 
@@ -103,31 +91,27 @@ bool RoutineManager::categorizeRoutine(int id, const std::string& category)
 }
 
 // ============================================================================
-// Get all routines (returns a copy - thread safe)
+// Get all routines (returns a copy for safety)
 // ============================================================================
 std::vector<Routine> RoutineManager::getAllRoutines() const
 {
-    std::lock_guard<std::mutex> lock(mtx_);
-    return routines_;  // copy is intentional for thread safety
+    return routines_;
 }
 
 // ============================================================================
 // Filter routines using a predicate (lambda, functor, or function pointer)
 //
-//   C++11: std::function<bool(const Routine&)> is a "function wrapper"
-//     It can hold ANY callable matching that signature:
-//       - Lambda:   filterRoutines([](const Routine& r){ return r.completed; })
-//       - Function: filterRoutines(isCompleted)
-//       - Functor:  filterRoutines(MyChecker{})
+//   std::function<bool(const Routine&)> is a "function wrapper" -
+//   it can hold any callable that matches the signature:
+//     - Lambda:   filterRoutines([](const Routine& r){ return r.completed; })
+//     - Function: filterRoutines(isCompleted)
+//     - Functor:  filterRoutines(MyChecker{})
 // ============================================================================
 std::vector<Routine> RoutineManager::filterRoutines(
     std::function<bool(const Routine&)> predicate) const
 {
-    std::lock_guard<std::mutex> lock(mtx_);
-
     std::vector<Routine> result;
 
-    // C++11: Range-based for loop - cleaner than index-based iteration
     for(const auto& r : routines_)
     {
         if(predicate(r))
@@ -140,7 +124,6 @@ std::vector<Routine> RoutineManager::filterRoutines(
 
 // ============================================================================
 // Convenience filters using lambdas
-//   C++11: Lambda expressions - anonymous inline functions
 // ============================================================================
 std::vector<Routine> RoutineManager::getPendingRoutines() const
 {
@@ -154,13 +137,12 @@ std::vector<Routine> RoutineManager::getCompletedRoutines() const
 
 std::vector<Routine> RoutineManager::searchRoutines(const std::string& keyword) const
 {
-    // C++11: Lambda captures 'keyword' by reference [&keyword]
-    //   The lambda "remembers" the keyword variable from the outer scope
-    // Case-insensitive search: convert both keyword and fields to lowercase
+    // Convert keyword to lowercase for case-insensitive matching
     std::string lower_keyword = keyword;
     std::transform(lower_keyword.begin(), lower_keyword.end(),
                    lower_keyword.begin(), ::tolower);
 
+    // Lambda captures the keyword by reference so we can use it inside
     return filterRoutines([&lower_keyword](const Routine& r)
     {
         auto toLower = [](const std::string& s)
@@ -178,13 +160,11 @@ std::vector<Routine> RoutineManager::searchRoutines(const std::string& keyword) 
 
 // ============================================================================
 // Get a single routine by ID
-//   C++17: std::optional - "maybe it's there, maybe it's not"
-//     Much better than returning a pointer or throwing an exception
+//   std::optional - returns empty if routine not found, much cleaner than
+//   returning a pointer or throwing an exception for a "not found" case
 // ============================================================================
 std::optional<Routine> RoutineManager::getRoutineById(int id) const
 {
-    std::lock_guard<std::mutex> lock(mtx_);
-
     auto it = id_index_.find(id);
     if(it == id_index_.end())
     {
@@ -198,14 +178,11 @@ std::optional<Routine> RoutineManager::getRoutineById(int id) const
 // ============================================================================
 size_t RoutineManager::totalCount() const
 {
-    std::lock_guard<std::mutex> lock(mtx_);
     return routines_.size();
 }
 
 size_t RoutineManager::completedCount() const
 {
-    std::lock_guard<std::mutex> lock(mtx_);
-    // C++11: std::count_if with lambda - count elements matching a condition
     return static_cast<size_t>(
         std::count_if(routines_.begin(), routines_.end(),
                       [](const Routine& r) { return r.completed; }));
@@ -213,7 +190,6 @@ size_t RoutineManager::completedCount() const
 
 size_t RoutineManager::pendingCount() const
 {
-    std::lock_guard<std::mutex> lock(mtx_);
     return static_cast<size_t>(
         std::count_if(routines_.begin(), routines_.end(),
                       [](const Routine& r) { return !r.completed; }));
@@ -229,9 +205,7 @@ const std::vector<Routine>& RoutineManager::getRoutinesRef() const
 
 void RoutineManager::setRoutines(std::vector<Routine> new_routines)
 {
-    std::lock_guard<std::mutex> lock(mtx_);
-
-    // C++11: std::move transfers the entire vector in O(1)
+    // std::move transfers the entire vector in O(1) - no element-by-element copy
     routines_ = std::move(new_routines);
     rebuildIndex();
 
@@ -248,7 +222,6 @@ void RoutineManager::setRoutines(std::vector<Routine> new_routines)
 
 void RoutineManager::clearAll()
 {
-    std::lock_guard<std::mutex> lock(mtx_);
     routines_.clear();
     id_index_.clear();
     next_id_ = 1;

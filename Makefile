@@ -6,12 +6,11 @@
 # Clean:  make clean
 #
 # Uses C++17 for: optional, structured bindings, filesystem, etc.
-# Uses -pthread for: std::thread, std::mutex, std::condition_variable
 # ============================================================================
 
 CXX       = g++
-CXXFLAGS  = -std=c++17 -Wall -Wextra -pthread -I include -I ..
-LDFLAGS   = -pthread
+CXXFLAGS  = -std=c++17 -Wall -Wextra -I include -I ..
+LDFLAGS   =
 
 SRC_DIR   = src
 OBJ_DIR   = obj

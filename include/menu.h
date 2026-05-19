@@ -1,26 +1,24 @@
 #pragma once
 
 #include "routine_manager.h"
-#include "reminder_service.h"
 #include "statistics.h"
 #include "data_manager.h"
 
 // ============================================================================
 //   Menu: drives the entire user interface
-//   Delegates to RoutineManager, ReminderService, Statistics, DataManager
+//   Delegates to RoutineManager, Statistics, and DataManager
+//   (Reminder service will be added in a future update with threading support)
 // ============================================================================
 class Menu
 {
 private:
     RoutineManager&  manager_;
-    ReminderService& reminder_;
     Statistics&      stats_;
     DataManager&     data_mgr_;
 
     // Top-level menus
     void mainMenu();
     void routineManagement();
-    void reminderManagement();
     void statisticsReports();
     void dataManagement();
 
@@ -36,7 +34,6 @@ private:
     void searchRoutine();
 
 public:
-    Menu(RoutineManager& mgr, ReminderService& rem,
-         Statistics& st, DataManager& dm);
+    Menu(RoutineManager& mgr, Statistics& st, DataManager& dm);
     void run();
 };
