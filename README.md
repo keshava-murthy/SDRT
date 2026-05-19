@@ -105,6 +105,6 @@ Saved in `data/routines.json`:
 ---
 
 ## Rough design can be found here :
-https://excalidraw.com/#json=afIo6VsZ-XbmuGbJoASD9,ZgjCb_iDKzgU_UjVNIO3gw
+https://excalidraw.com/#json=PYpYex46ricb1qbo2RfwG,85zHPfR7TV1FdMmGprR2-Q
 
 ---
