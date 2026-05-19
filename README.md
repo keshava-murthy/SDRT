@@ -32,7 +32,7 @@ make run      # run the application
 - Total / Completed / Pending counts
 - **Visual progress bar** with percentage
 - Category-wise and Priority-wise breakdowns
-- Appreciation message when you hit 100%!
+- Appreciation message when you hit 100%
 
 ### 4. Data Management
 - **Save** routines to a JSON file (`data/routines.json`)
@@ -101,3 +101,10 @@ Saved in `data/routines.json`:
     ]
 }
 ```
+
+---
+
+## Rough design can be found here :
+https://excalidraw.com/#json=afIo6VsZ-XbmuGbJoASD9,ZgjCb_iDKzgU_UjVNIO3gw
+
+---
