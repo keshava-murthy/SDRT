@@ -1,13 +1,12 @@
 # Smart Daily Routine Tracker (SDRT)
 
-A **Modern C++ console-based productivity system** where you can create daily routines, assign priorities, track progress, and manage your day — all from the terminal.
+A **Modern C++ console-based productivity system** where you can create daily routines, assign priorities, track progress, and manage your day -> all from the terminal.
 
----
 
 ## Rough design can be found here :
 https://excalidraw.com/#json=c8JwvBUjznksa-HvseEh2,kXmWaAYHlnQQw6ThHBDR4w
 
----
+
 
 ---
 
@@ -26,7 +25,7 @@ make run      # run the application
 ### 1. Routine Management
 - **Add** routines with name, description, category, priority, and reminder frequency
 - **View** all / pending / completed routines with color-coded display
-- **Mark** routines as completed (with appreciation messages!)
+- **Mark** routines as completed (with appreciation messages)
 - **Update** priority, **categorize**, **delete**, or **search** routines
 
 ### 2. Statistics & Reports
@@ -62,7 +61,7 @@ make run      # run the application
 4. On exit, data is saved automatically
 
 ### Progress Tracking
-1. The main menu shows a progress bar: `[########------] 55.0%`
+1. The main menu shows a progress bar: `[########------] 57.0%`
 2. Percentage = completed routines / total routines * 100
 3. When hitting 100%, a special appreciation message is shown
 
